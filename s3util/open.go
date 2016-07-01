@@ -3,6 +3,7 @@ package s3util
 import (
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -26,8 +27,13 @@ func Open(url string, c *Config) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
+	switch resp.StatusCode {
+	case 200:
+		return resp.Body, nil
+	case 404:
+		resp.Body.Close()
+		return nil, os.ErrNotExist
+	default:
 		return nil, newRespError(resp)
 	}
-	return resp.Body, nil
 }
